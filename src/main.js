@@ -90,7 +90,7 @@ async function saveScores() {
 
 app.addEventListener('input', event => { if (event.target.id === 'search') { const caret = event.target.selectionStart; search = event.target.value; setup(); const input = document.querySelector('#search'); input.focus(); input.setSelectionRange(caret, caret) } if (event.target.matches('[data-side]')) event.target.value = event.target.value.replace(/\D/g, '').slice(0, 2) })
 app.addEventListener('click', async event => {
-  const button = event.target.closest('[data-team]'); if (button) { const team = teams.find(team => team.id === +button.dataset.team); selected = selected.some(item => item.id === team.id) ? selected.filter(item => item.id !== team.id) : [...selected, team]; setup(); return }
+  const button = event.target.closest('[data-team]'); if (button) { const team = teams.find(team => team.id === button.dataset.team); selected = selected.some(item => item.id === team.id) ? selected.filter(item => item.id !== team.id) : [...selected, team]; setup(); return }
   if (event.target.id === 'random-teams') { const count = Math.max(2, Math.min(teams.length, Number(document.querySelector('#random-count').value) || 8)); selected = shuffled(teams).slice(0, count); setup(); return }
   if (event.target.closest('[data-create]')) { creating = true; selected = []; search = ''; render(); return }
   if (event.target.closest('[data-leagues]')) { league = null; creating = false; render(); return }
