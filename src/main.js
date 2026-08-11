@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
+import countries from 'i18n-iso-countries'
+import hebrewCountryNames from 'i18n-iso-countries/langs/he.json'
 import './style.css'
 
 const supabase = createClient('https://ltjnxncwdorjtmlnywgm.supabase.co', 'sb_publishable_RQPNDUY1H0-SXQqjw2dugA_NXcFeYGr')
+countries.registerLocale(hebrewCountryNames)
 const teams = [['מקסיקו','🇲🇽'],['דרום אפריקה','🇿🇦'],['דרום קוריאה','🇰🇷'],['צ׳כיה','🇨🇿'],['קנדה','🇨🇦'],['בוסניה והרצגובינה','🇧🇦'],['קטר','🇶🇦'],['שווייץ','🇨🇭'],['ברזיל','🇧🇷'],['מרוקו','🇲🇦'],['האיטי','🇭🇹'],['סקוטלנד','🏴'],['ארצות הברית','🇺🇸'],['פרגוואי','🇵🇾'],['אוסטרליה','🇦🇺'],['טורקיה','🇹🇷'],['גרמניה','🇩🇪'],['קוראסאו','🇨🇼'],['חוף השנהב','🇨🇮'],['אקוודור','🇪🇨'],['הולנד','🇳🇱'],['יפן','🇯🇵'],['שוודיה','🇸🇪'],['תוניסיה','🇹🇳'],['בלגיה','🇧🇪'],['מצרים','🇪🇬'],['איראן','🇮🇷'],['ניו זילנד','🇳🇿'],['ספרד','🇪🇸'],['כף ורדה','🇨🇻'],['ערב הסעודית','🇸🇦'],['אורוגוואי','🇺🇾'],['צרפת','🇫🇷'],['סנגל','🇸🇳'],['עיראק','🇮🇶'],['נורווגיה','🇳🇴'],['ארגנטינה','🇦🇷'],['אלג׳יריה','🇩🇿'],['אוסטריה','🇦🇹'],['ירדן','🇯🇴'],['פורטוגל','🇵🇹'],['קונגו הדמוקרטית','🇨🇩'],['אוזבקיסטן','🇺🇿'],['קולומביה','🇨🇴'],['אנגליה','🏴'],['קרואטיה','🇭🇷'],['גאנה','🇬🇭'],['פנמה','🇵🇦']].map(([name, flag], id) => ({ id, name, flag }))
+const countryCodes = 'AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR BN BG BF BI CV KH CM CA CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT HN HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KP KR KW KG LA LV LB LS LR LY LI LT LU MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG MK NO OM PK PW PA PG PY PE PH PL PT QA RO RU RW KN LC VC WS SM ST SA SN SC SL SG SK SI SB SO ZA ES LK SD SR SZ SE CH SY TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VE VN YE ZM ZW PS VA XK'.split(' ')
+// Replace the duplicated Eswatini code with the missing Serbia and South Sudan codes.
+countryCodes.splice(countryCodes.lastIndexOf('SZ'), 1, 'RS', 'SS')
+const countryFlag = code => String.fromCodePoint(...[...code].map(letter => 127397 + letter.charCodeAt(0)))
+teams.splice(0, teams.length, ...countryCodes.map(code => ({ id: code, name: countries.getName(code, 'he') || code, flag: countryFlag(code) })).sort((a, b) => a.name.localeCompare(b.name, 'he')))
 const app = document.querySelector('#app')
 let user = null; let leagues = []; let league = null; let selected = []; let search = ''; let creating = false; let loading = true; let loadError = ''
 
