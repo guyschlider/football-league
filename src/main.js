@@ -27,7 +27,7 @@ function table() {
 }
 
 function authScreen(message = '') {
-  app.innerHTML = `<main class="auth-shell"><section class="auth-card"><p class="eyebrow">ליגת הכדורגל שלי</p><h1>נכנסים למגרש</h1><p>בוחרים כינוי וקוד בן 6 ספרות. אין צורך בדוא״ל.</p><form id="auth-form"><label>כינוי<input name="nickname" minlength="2" maxlength="20" placeholder="למשל: תום" required></label><label>קוד כניסה<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="6 ספרות" required></label><button class="primary" name="action" value="login">כניסה</button><button class="secondary" name="action" value="signup">יצירת שחקן חדש</button><p class="error">${message}</p></form></section></main>`
+  app.innerHTML = `<main class="auth-shell"><section class="auth-card"><p class="eyebrow">ליגת הכדורגל שלי</p><h1>נכנסים למגרש</h1><p>בוחרים כינוי וקוד בן 6 ספרות. אין צורך בדוא״ל.</p><form id="auth-form"><label>כינוי<input name="nickname" minlength="2" maxlength="20" placeholder="למשל: תום" required></label><label>קוד כניסה<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="6 ספרות" required></label><button class="primary">כניסה למגרש</button><p class="auth-hint">כינוי חדש? ניצור עבורך שחקן חדש מיד.</p><p class="error">${message}</p></form></section></main>`
 }
 
 function leaguesScreen() {
@@ -54,14 +54,16 @@ async function loadLeagues() {
   loading = false; render()
 }
 
-async function authenticate(form, action) {
+async function authenticate(form) {
   const data = new FormData(form); const nickname = data.get('nickname').trim(); const pin = data.get('pin')
   if (!/^[\p{L}\p{N} _-]{2,20}$/u.test(nickname) || !/^\d{6}$/.test(pin)) { authScreen('יש להזין כינוי וקוד של 6 ספרות.'); return }
   const details = { email: accountEmail(nickname), password: pin }
-  const result = action === 'signup' ? await supabase.auth.signUp({ ...details, options: { data: { nickname } } }) : await supabase.auth.signInWithPassword(details)
-  if (result.error) { authScreen(action === 'signup' ? 'לא הצלחנו ליצור שחקן. ייתכן שהכינוי כבר תפוס.' : 'הכינוי או קוד הכניסה אינם נכונים.'); return }
-  if (!result.data.session) { authScreen('צריך לבטל את אימות הדוא״ל בהגדרות Supabase לפני יצירת שחקנים.'); return }
-  user = result.data.user; await loadLeagues()
+  const login = await supabase.auth.signInWithPassword(details)
+  if (login.data.session) { user = login.data.user; await loadLeagues(); return }
+  const signup = await supabase.auth.signUp({ ...details, options: { data: { nickname } } })
+  if (signup.data.session) { user = signup.data.user; await loadLeagues(); return }
+  if (signup.data.user?.identities?.length === 0) { authScreen('הכינוי כבר קיים, אבל הקוד לא מתאים. נסו שוב.'); return }
+  authScreen('לא הצלחנו להיכנס כרגע. נסו שוב בעוד רגע.')
 }
 
 async function createLeague(form) {
@@ -87,7 +89,7 @@ app.addEventListener('click', async event => {
   if (event.target.closest('[data-signout]')) await supabase.auth.signOut()
 })
 app.addEventListener('change', event => { if (!event.target.matches('[data-side]')) return; const value = event.target.value; if (value !== '' && (!Number.isInteger(+value) || +value < 0)) return; const match = league.fixtures.find(game => game.id === event.target.dataset.game); match[`${event.target.dataset.side}Score`] = value; dashboard(); void saveScores() })
-app.addEventListener('submit', event => { event.preventDefault(); if (event.target.id === 'auth-form') { void authenticate(event.target, event.submitter.value); return } if (event.target.id === 'league-form') void createLeague(event.target) })
+app.addEventListener('submit', event => { event.preventDefault(); if (event.target.id === 'auth-form') { void authenticate(event.target); return } if (event.target.id === 'league-form') void createLeague(event.target) })
 
 supabase.auth.onAuthStateChange((_event, session) => { user = session?.user || null; league = null; creating = false; if (user) void loadLeagues(); else { loading = false; render() } })
 const { data: { session } } = await supabase.auth.getSession()
